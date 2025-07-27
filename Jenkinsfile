@@ -1,9 +1,5 @@
 pipeline {
-  agent {
-    docker {
-      image 'java-selenium-chrome-agent'
-    }
-  }
+  agent { label 'java-selenium-chrome-agent' }
 
   environment {
     SELENIUM_URL = 'http://172.17.0.1:4444/wd/hub'
