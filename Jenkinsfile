@@ -1,7 +1,7 @@
 pipeline {
   agent {
     docker {
-      image 'java-selenium-chrome-agent'
+      image 'maven:3.9-eclipse-temurin-17'
       args '--network host'
     }
   }
