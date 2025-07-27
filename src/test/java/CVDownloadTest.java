@@ -2,8 +2,13 @@ import org.junit.jupiter.api.*;
 import org.openqa.selenium.*;
 import org.openqa.selenium.remote.*;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.net.URL;
+import java.nio.file.*;
+import java.time.Duration;
+import java.io.File;
 
 public class CVDownloadTest {
 
@@ -17,19 +22,29 @@ public class CVDownloadTest {
     }
 
     @Test
-    public void verifyDownloadCVButtonExists() {
-        driver.get("https://keithwesley254.github.io/");
+    public void verifyDownloadCVButtonExists() throws Exception {
+        try {
+            driver.get("https://keithwesley254.github.io/");
 
-        // Use XPath to find the anchor tag by link text
-        WebElement downloadButton = driver.findElement(By.xpath("//a[text()='Download My CV']"));
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+            WebElement downloadButton = wait.until(
+                ExpectedConditions.visibilityOfElementLocated(
+                    By.xpath("//a[contains(text(), 'Download My CV')]")
+                )
+            );
 
-        // Check if it's displayed and enabled
-        Assertions.assertTrue(downloadButton.isDisplayed(), "Download button is visible");
-        Assertions.assertTrue(downloadButton.isEnabled(), "Download button is clickable");
+            Assertions.assertTrue(downloadButton.isDisplayed(), "Download button is visible");
+            Assertions.assertTrue(downloadButton.isEnabled(), "Download button is clickable");
 
-        // Optional: assert the href contains the PDF
-        String href = downloadButton.getAttribute("href");
-        Assertions.assertTrue(href.endsWith("prof-cv.pdf"), "Href points to the CV PDF");
+            String href = downloadButton.getAttribute("href");
+            Assertions.assertTrue(href.endsWith("prof-cv.pdf"), "Href points to the CV PDF");
+
+        } catch (Exception e) {
+            File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+            Path path = Paths.get("target", "failure-screenshot.png");
+            Files.copy(screenshot.toPath(), path, StandardCopyOption.REPLACE_EXISTING);
+            throw e;
+        }
     }
 
     @AfterEach
