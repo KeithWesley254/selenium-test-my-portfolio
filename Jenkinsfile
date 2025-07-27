@@ -1,7 +1,7 @@
 pipeline {
   agent {
     docker {
-      image 'maven:3.9-eclipse-temurin-17'
+      image 'keithwesley254/maven-docker-agent:latest'
       args '--network host'
     }
   }
@@ -19,7 +19,7 @@ pipeline {
 
     stage('Run Selenium Tests') {
       steps {
-        sh 'mvn test -Dselenium.remote.url=$SELENIUM_URL'
+        sh 'mvn test -Dselenium.remote.url=${SELENIUM_URL}'
       }
     }
   }

@@ -1,5 +1,3 @@
-package com.example;
-
 import org.junit.jupiter.api.*;
 import org.openqa.selenium.*;
 import org.openqa.selenium.remote.*;
@@ -15,7 +13,7 @@ public class CVDownloadTest {
     public void setUp() throws Exception {
         String remoteUrl = System.getProperty("selenium.remote.url", "http://localhost:4444/wd/hub");
         ChromeOptions options = new ChromeOptions();
-        driver = new RemoteWebDriver(new URI.toURL(remoteUrl), options);
+        driver = new RemoteWebDriver(new URL(remoteUrl), options);
     }
 
     @Test
