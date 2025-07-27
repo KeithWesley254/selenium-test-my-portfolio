@@ -1,9 +1,6 @@
 pipeline {
   agent {
-    docker {
-      image 'keithwesley254/maven-docker-agent:latest'
-      args '--network host'
-    }
+    label 'java-selenium-chrome-agent'
   }
 
   environment {
@@ -11,15 +8,16 @@ pipeline {
   }
 
   stages {
-    stage('Clone Repo') {
+    stage('Run in Docker Container') {
+      agent {
+        docker {
+          image 'keithwesley254/maven-docker-agent:latest'
+          args '--network host'
+        }
+      }
       steps {
         git 'https://github.com/KeithWesley254/selenium-test-my-portfolio.git'
-      }
-    }
-
-    stage('Run Selenium Tests') {
-      steps {
-        sh "mvn clean test -Dselenium.remote.url=${SELENIUM_URL}"
+        sh 'mvn clean test -Dselenium.remote.url=$SELENIUM_URL'
       }
     }
   }
