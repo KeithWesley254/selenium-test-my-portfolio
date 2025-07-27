@@ -19,7 +19,7 @@ pipeline {
 
     stage('Run Selenium Tests') {
       steps {
-        sh 'mvn test -Dselenium.remote.url=${SELENIUM_URL}'
+        sh "mvn clean test -Dselenium.remote.url=${SELENIUM_URL}"
       }
     }
   }
