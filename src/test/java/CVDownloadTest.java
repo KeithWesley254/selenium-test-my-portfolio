@@ -26,23 +26,25 @@ public class CVDownloadTest {
     public void verifyDownloadCVButtonExists() throws IOException {
         driver.get("https://keithwesley254.github.io/");
 
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
 
         try {
-            WebElement downloadButton = wait.until(ExpectedConditions.visibilityOfElementLocated(
-                    By.xpath("//a[contains(text(), 'Download My CV')]")));
+            // Wait for the wrapper to reveal (animation delay might apply)
+            WebElement wrapper = wait.until(ExpectedConditions.visibilityOfElementLocated(
+                    By.cssSelector(".btn-wrapper.revealed")));
 
-            Assertions.assertTrue(downloadButton.isDisplayed(), "Download button is visible");
-            Assertions.assertTrue(downloadButton.isEnabled(), "Download button is clickable");
+            // Then locate the button inside the wrapper
+            WebElement downloadButton = wrapper.findElement(By.cssSelector("a.btn.btn-primary"));
+
+            Assertions.assertTrue(downloadButton.isDisplayed(), "✅ Download button is visible");
+            Assertions.assertTrue(downloadButton.isEnabled(), "✅ Download button is clickable");
 
             String href = downloadButton.getAttribute("href");
-            Assertions.assertTrue(href.endsWith("prof-cv.pdf"), "Href points to the CV PDF");
+            Assertions.assertTrue(href.endsWith("prof-cv.pdf"), "✅ Href points to the CV PDF");
 
-            // ✅ Log success message
             System.out.println("✅ CV download button found and validated.");
 
         } catch (TimeoutException e) {
-            // ❌ Print URL and take screenshot on failure
             System.out.println("❌ Timeout while waiting for CV button.");
             System.out.println("Failed URL: " + driver.getCurrentUrl());
 
@@ -50,6 +52,7 @@ public class CVDownloadTest {
             File src = ts.getScreenshotAs(OutputType.FILE);
             File dest = new File("target/failure-screenshot.png");
             Files.copy(src.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
             throw e;
         }
     }
