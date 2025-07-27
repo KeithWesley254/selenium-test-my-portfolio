@@ -6,22 +6,30 @@ pipeline {
   }
 
   stages {
-    stage('Check Selenium Grid') {
+    stage('Clone Repo') {
       steps {
-        sh '''
-          echo "Checking Selenium Grid status..."
-          curl -s --fail $SELENIUM_URL/status || {
-            echo "❌ Selenium Grid is not reachable at $SELENIUM_URL"
-            exit 1
-          }
-        '''
+        git 'https://github.com/KeithWesley254/selenium-test-my-portfolio.git'
       }
     }
 
     stage('Run Selenium Tests') {
       steps {
-        sh "mvn clean test -Dselenium.remote.url=${SELENIUM_URL}"
+        sh '''
+          curl -s --fail $SELENIUM_URL/status || {
+            echo "❌ Selenium Grid is not reachable at $SELENIUM_URL"
+            exit 1
+          }
+
+          mvn clean test -Dselenium.remote.url=$SELENIUM_URL
+        '''
       }
+    }
+  }
+
+  post {
+    always {
+      junit 'target/surefire-reports/*.xml'
+      archiveArtifacts artifacts: 'target/failure-screenshot.png', allowEmptyArchive: true
     }
   }
 }
