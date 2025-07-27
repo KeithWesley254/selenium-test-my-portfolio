@@ -6,12 +6,6 @@ pipeline {
   }
 
   stages {
-    stage('Clone Repo') {
-      steps {
-        git 'https://github.com/KeithWesley254/selenium-test-my-portfolio.git'
-      }
-    }
-
     stage('Check Selenium Grid') {
       steps {
         sh '''
