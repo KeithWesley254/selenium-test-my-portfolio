@@ -20,7 +20,7 @@ pipeline {
         }
       }
       steps {
-        sh 'mvn clean test -Dselenium.remote.url=$SELENIUM_URL'
+        sh "mvn clean test -Dselenium.remote.url=${SELENIUM_URL}"
       }
     }
   }
