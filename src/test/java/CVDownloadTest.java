@@ -1,15 +1,21 @@
-import org.junit.jupiter.api.*;
-import org.openqa.selenium.*;
-import org.openqa.selenium.remote.*;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
-
-import java.net.URL;
-import java.nio.file.*;
-import java.time.Duration;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.time.Duration;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.openqa.selenium.*;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class CVDownloadTest {
 
@@ -25,40 +31,48 @@ public class CVDownloadTest {
     @Test
     public void verifyDownloadCVButtonExists() throws IOException {
         driver.get("https://keithwesley254.github.io/");
-
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
 
         try {
-            // Step 1: Wait for wrapper to be in the DOM
+            // Wait until wrapper is present
             WebElement wrapper = wait.until(ExpectedConditions.presenceOfElementLocated(
                     By.cssSelector(".btn-wrapper")));
 
-            // Step 2: Scroll to the wrapper to trigger the reveal animation
+            // Scroll wrapper into view to trigger animation
             ((JavascriptExecutor) driver).executeScript(
-                    "arguments[0].scrollIntoView({behavior: 'instant', block: 'center'});", wrapper);
+                    "arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", wrapper);
 
-            // Step 3: Wait for the class 'revealed' to be added
-            wait.until(driver1 -> wrapper.getAttribute("class").contains("revealed"));
+            // Wait for 'revealed' class on wrapper using a custom ExpectedCondition
+            wait.until((ExpectedCondition<Boolean>) drv ->
+                    wrapper.getAttribute("class").contains("revealed"));
 
-            // Step 4: Locate the button and validate it
-            WebElement downloadButton = wrapper.findElement(By.cssSelector("a.btn.btn-primary"));
+            // Now wait until the download button is both present and visible inside the wrapper
+            WebElement downloadButton = wait.until(ExpectedConditions.visibilityOfElementLocated(
+                    By.cssSelector(".btn-wrapper.revealed a.btn.btn-primary")));
 
+            // Extra safety: wait until it's clickable
+            wait.until(ExpectedConditions.elementToBeClickable(downloadButton));
+
+            // Final assertions
             Assertions.assertTrue(downloadButton.isDisplayed(), "✅ Download button is visible");
-            Assertions.assertTrue(downloadButton.isEnabled(), "✅ Download button is clickable");
+            Assertions.assertTrue(downloadButton.isEnabled(), "✅ Download button is enabled");
 
             String href = downloadButton.getAttribute("href");
+            Assertions.assertNotNull(href, "❌ Button href is null");
             Assertions.assertTrue(href.endsWith("prof-cv.pdf"), "✅ Href points to the CV PDF");
 
-            System.out.println("✅ CV download button found and validated.");
+            System.out.println("✅ CV download button found, visible, enabled, and href validated.");
 
-        } catch (TimeoutException e) {
-            System.out.println("❌ Timeout while waiting for CV button.");
-            System.out.println("Failed URL: " + driver.getCurrentUrl());
+        } catch (TimeoutException | NoSuchElementException e) {
+            System.err.println("❌ CV download button test failed: " + e.getMessage());
 
-            TakesScreenshot ts = (TakesScreenshot) driver;
-            File src = ts.getScreenshotAs(OutputType.FILE);
-            File dest = new File("target/failure-screenshot.png");
-            Files.copy(src.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            // Save screenshot
+            File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+            Files.copy(screenshot.toPath(), Paths.get("target/failure-screenshot.png"),
+                    StandardCopyOption.REPLACE_EXISTING);
+
+            // Save page source
+            Files.write(Paths.get("target/failure-page-source.html"), driver.getPageSource().getBytes());
 
             throw e;
         }
