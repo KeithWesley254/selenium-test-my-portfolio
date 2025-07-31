@@ -54,7 +54,7 @@ public class CVDownloadTest {
             int statusCode = connection.getResponseCode();
             Assertions.assertEquals(200, statusCode, "✅ CV PDF is downloadable (HTTP 200)");
 
-            // Optional: save success screenshot
+            //save success screenshot
             File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
             Files.copy(screenshot.toPath(), Paths.get("target/success-screenshot.png"), StandardCopyOption.REPLACE_EXISTING);
 
