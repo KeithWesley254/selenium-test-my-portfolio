@@ -29,11 +29,18 @@ public class CVDownloadTest {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
 
         try {
-            // Wait for the wrapper to reveal (animation delay might apply)
-            WebElement wrapper = wait.until(ExpectedConditions.visibilityOfElementLocated(
-                    By.cssSelector(".btn-wrapper.revealed")));
+            // Step 1: Wait for wrapper to be in the DOM
+            WebElement wrapper = wait.until(ExpectedConditions.presenceOfElementLocated(
+                    By.cssSelector(".btn-wrapper")));
 
-            // Then locate the button inside the wrapper
+            // Step 2: Scroll to the wrapper to trigger the reveal animation
+            ((JavascriptExecutor) driver).executeScript(
+                    "arguments[0].scrollIntoView({behavior: 'instant', block: 'center'});", wrapper);
+
+            // Step 3: Wait for the class 'revealed' to be added
+            wait.until(driver1 -> wrapper.getAttribute("class").contains("revealed"));
+
+            // Step 4: Locate the button and validate it
             WebElement downloadButton = wrapper.findElement(By.cssSelector("a.btn.btn-primary"));
 
             Assertions.assertTrue(downloadButton.isDisplayed(), "✅ Download button is visible");
