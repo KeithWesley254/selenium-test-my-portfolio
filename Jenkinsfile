@@ -1,5 +1,5 @@
 pipeline {
-  agent { label 'multi-browser-mavenjava-agent' }
+  agent { label 'multibrowser-java-agent' }
 
   environment {
     SELENIUM_URL = 'http://172.17.0.1:4444/wd/hub'
