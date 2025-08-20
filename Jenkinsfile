@@ -2,20 +2,35 @@ pipeline {
   agent { label 'multibrowser-java-agent' }
 
   environment {
-    SELENIUM_URL = 'http://172.17.0.1:4444/wd/hub'
+    SELENIUM_URL = 'http://host.docker.internal:4444/wd/hub'
   }
 
   stages {
     stage('Run Selenium Tests') {
       steps {
-        sh '''
-          curl -s --fail $SELENIUM_URL/status || {
-            echo "❌ Selenium Grid is not reachable at $SELENIUM_URL"
-            exit 1
-          }
+        script {
+          if (isUnix()) {
+            // Linux agent
+            sh '''
+              curl -s --fail $SELENIUM_URL/status || {
+                echo "❌ Selenium Grid is not reachable at $SELENIUM_URL"
+                exit 1
+              }
 
-          mvn clean test -Dselenium.remote.url=$SELENIUM_URL
-        '''
+              mvn clean test -Dselenium.remote.url=$SELENIUM_URL
+            '''
+          } else {
+            // Windows agent
+            bat '''
+              curl -s --fail %SELENIUM_URL%/status || (
+                echo ❌ Selenium Grid is not reachable at %SELENIUM_URL%
+                exit 1
+              )
+
+              mvn clean test -Dselenium.remote.url=%SELENIUM_URL%
+            '''
+          }
+        }
       }
     }
   }
