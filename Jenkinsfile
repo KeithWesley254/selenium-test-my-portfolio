@@ -1,13 +1,18 @@
 pipeline {
   agent { label 'multibrowser-java-agent' }
 
+  tools {
+    jdk 'jdk21'
+    maven 'maven3'
+  }
+
   options {
+    ansiColor('xterm')
     timestamps()
     timeout(time: 30, unit: 'MINUTES')
   }
 
   environment {
-    // No hardcoded IPs; works on Windows host talking to Linux Docker
     SELENIUM_URL = 'http://host.docker.internal:4444/wd/hub'
     GRID_READY_TIMEOUT_SECS = '120'
   }
@@ -15,58 +20,53 @@ pipeline {
   stages {
     stage('Checkout') {
       steps {
-        ansiColor('xterm') {
-          checkout scm
-        }
+        checkout scm
       }
     }
 
     stage('Verify Selenium Grid & Run Tests') {
       steps {
-        ansiColor('xterm') {
-          powershell '''
-            Write-Host "🔎 Checking Selenium Grid at $env:SELENIUM_URL ..."
+        powershell '''
+          Write-Host "🔎 Checking Selenium Grid at $env:SELENIUM_URL ..."
+          $deadline = (Get-Date).AddSeconds([int]$env:GRID_READY_TIMEOUT_SECS)
+          $healthy = $false
 
-            $deadline = (Get-Date).AddSeconds([int]$env:GRID_READY_TIMEOUT_SECS)
-            $healthy = $false
-
-            while ((Get-Date) -lt $deadline) {
-              try {
-                $resp = Invoke-WebRequest -Uri "$env:SELENIUM_URL/status" -UseBasicParsing -TimeoutSec 5
-                if ($resp.StatusCode -eq 200) {
-                  try {
-                    $json = $resp.Content | ConvertFrom-Json
-                    $ready = $json?.value?.ready
-                    if ($ready -eq $true) {
-                      $healthy = $true
-                      Write-Host "✅ Selenium Grid is ready."
-                      break
-                    } else {
-                      Write-Host "⏳ Grid responded 200 but 'ready' != true. Waiting..."
-                    }
-                  } catch {
+          while ((Get-Date) -lt $deadline) {
+            try {
+              $resp = Invoke-WebRequest -Uri "$env:SELENIUM_URL/status" -UseBasicParsing -TimeoutSec 5
+              if ($resp.StatusCode -eq 200) {
+                try {
+                  $json = $resp.Content | ConvertFrom-Json
+                  $ready = $json?.value?.ready
+                  if ($ready -eq $true) {
                     $healthy = $true
-                    Write-Host "✅ Selenium Grid returned 200. Proceeding."
+                    Write-Host "✅ Selenium Grid is ready."
                     break
+                  } else {
+                    Write-Host "⏳ Grid responded 200 but 'ready' != true. Waiting..."
                   }
-                } else {
-                  Write-Host "⏳ Grid responded with HTTP $($resp.StatusCode). Retrying..."
+                } catch {
+                  $healthy = $true
+                  Write-Host "✅ Selenium Grid returned 200. Proceeding."
+                  break
                 }
-              } catch {
-                Write-Host "⏳ Grid not reachable yet: $($_.Exception.Message)"
+              } else {
+                Write-Host "⏳ Grid responded with HTTP $($resp.StatusCode). Retrying..."
               }
-              Start-Sleep -Seconds 3
+            } catch {
+              Write-Host "⏳ Grid not reachable yet: $($_.Exception.Message)"
             }
+            Start-Sleep -Seconds 3
+          }
 
-            if (-not $healthy) {
-              Write-Host "❌ Selenium Grid was not ready within $env:GRID_READY_TIMEOUT_SECS seconds at $env:SELENIUM_URL"
-              exit 1
-            }
+          if (-not $healthy) {
+            Write-Host "❌ Selenium Grid was not ready within $env:GRID_READY_TIMEOUT_SECS seconds at $env:SELENIUM_URL"
+            exit 1
+          }
 
-            Write-Host "🚀 Running tests with Maven..."
-            mvn -B -V clean test -Dselenium.remote.url=$env:SELENIUM_URL
-          '''
-        }
+          Write-Host "🚀 Running tests with Maven..."
+          mvn -B -V clean test -Dselenium.remote.url=$env:SELENIUM_URL
+        '''
       }
     }
   }
