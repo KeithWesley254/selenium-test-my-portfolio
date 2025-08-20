@@ -1,20 +1,19 @@
 pipeline {
   agent { label 'multibrowser-java-agent' }
 
-  tools {
-    jdk 'jdk21'
-    maven 'maven3'
-  }
-
-  options {
-    ansiColor('xterm')
-    timestamps()
-    timeout(time: 30, unit: 'MINUTES')
-  }
-
   environment {
     SELENIUM_URL = 'http://host.docker.internal:4444/wd/hub'
     GRID_READY_TIMEOUT_SECS = '120'
+    JAVA_HOME = "${tool 'jdk-21'}"
+    MAVEN_HOME = "${tool 'maven-3.9.11'}"
+    PATH = "${env.PATH};${JAVA_HOME}\\bin;${MAVEN_HOME}\\bin"
+  }
+
+  options {
+    timestamps()
+    timeout(time: 30, unit: 'MINUTES')
+    // only enable if AnsiColor plugin is installed:
+    // ansiColor('xterm')
   }
 
   stages {
@@ -37,8 +36,7 @@ pipeline {
               if ($resp.StatusCode -eq 200) {
                 try {
                   $json = $resp.Content | ConvertFrom-Json
-                  $ready = $json?.value?.ready
-                  if ($ready -eq $true) {
+                  if ($null -ne $json -and $null -ne $json.value -and $json.value.ready -eq $true) {
                     $healthy = $true
                     Write-Host "✅ Selenium Grid is ready."
                     break
@@ -47,7 +45,7 @@ pipeline {
                   }
                 } catch {
                   $healthy = $true
-                  Write-Host "✅ Selenium Grid returned 200. Proceeding."
+                  Write-Host "✅ Selenium Grid returned 200 (could not parse JSON). Proceeding."
                   break
                 }
               } else {
