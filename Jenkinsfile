@@ -8,29 +8,19 @@ pipeline {
   stages {
     stage('Run Selenium Tests') {
       steps {
-        script {
-          if (isUnix()) {
-            // Linux agent
-            sh '''
-              curl -s --fail $SELENIUM_URL/status || {
-                echo "❌ Selenium Grid is not reachable at $SELENIUM_URL"
-                exit 1
-              }
-
-              mvn clean test -Dselenium.remote.url=$SELENIUM_URL
-            '''
-          } else {
-            // Windows agent
-            bat '''
-              curl -s --fail %SELENIUM_URL%/status || (
-                echo ❌ Selenium Grid is not reachable at %SELENIUM_URL%
-                exit 1
-              )
-
-              mvn clean test -Dselenium.remote.url=%SELENIUM_URL%
-            '''
+        powershell '''
+          Write-Host "🔎 Checking Selenium Grid at $env:SELENIUM_URL ..."
+          try {
+            $resp = Invoke-WebRequest -Uri "$env:SELENIUM_URL/status" -UseBasicParsing -TimeoutSec 10
+            Write-Host "✅ Selenium Grid is reachable."
+          } catch {
+            Write-Host "❌ Could not connect to Selenium Grid at $env:SELENIUM_URL"
+            exit 1
           }
-        }
+
+          # Run tests with Maven
+          mvn clean test -Dselenium.remote.url=$env:SELENIUM_URL
+        '''
       }
     }
   }
