@@ -1,15 +1,11 @@
 pipeline {
   agent { label 'multibrowser-java-agent' }
 
+  // The environment block is no longer needed for JAVA_HOME and MAVEN_HOME
+  // because we'll set them in the script
   environment {
     SELENIUM_URL = 'http://host.docker.internal:4444/wd/hub'
     GRID_READY_TIMEOUT_SECS = '120'
-    // Set JAVA_HOME and MAVEN_HOME with the correct paths
-    JAVA_HOME = 'C:\\tools\\jdk\\jdk-21.0.8.9-hotspot'
-    MAVEN_HOME = 'C:\\tools\\Apache\\apache-maven-3.9.11'
-    
-    // Update the PATH to include the bin directories
-    PATH = "${env.PATH};${JAVA_HOME}\\bin;${MAVEN_HOME}\\bin"
   }
 
   options {
@@ -29,6 +25,15 @@ pipeline {
     stage('Verify Selenium Grid & Run Tests') {
       steps {
         powershell '''
+          # Explicitly set the environment variables within the powershell script
+          $env:JAVA_HOME = "C:\\tools\\jdk\\jdk-21.0.8.9-hotspot"
+          $env:MAVEN_HOME = "C:\\tools\\Apache\\apache-maven-3.9.11"
+          $env:PATH = "$env:PATH;$env:JAVA_HOME\\bin;$env:MAVEN_HOME\\bin"
+          
+          # Now, the environment variables should be correctly set for the shell.
+          Write-Host "Verifying JAVA_HOME: $env:JAVA_HOME"
+          Write-Host "Verifying MAVEN_HOME: $env:MAVEN_HOME"
+          
           Write-Host "🔎 Checking Selenium Grid at $env:SELENIUM_URL ..."
           $deadline = (Get-Date).AddSeconds([int]$env:GRID_READY_TIMEOUT_SECS)
           $healthy = $false
