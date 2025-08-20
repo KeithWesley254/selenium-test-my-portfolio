@@ -1,4 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
+<project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -24,7 +24,7 @@
       <version>${selenium.version}</version>
     </dependency>
 
-    <!-- JUnit Jupiter API -->
+    <!-- JUnit Jupiter API/Engine -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
@@ -35,7 +35,7 @@
 
   <build>
     <plugins>
-      <!-- Set Java version -->
+      <!-- Compiler -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -46,13 +46,21 @@
         </configuration>
       </plugin>
 
-      <!-- Run JUnit 5 tests -->
+      <!-- JUnit 5 via Surefire -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.2.5</version>
         <configuration>
           <useModulePath>false</useModulePath>
+          <!-- Ensure Jenkins can find the XML reports -->
+          <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+          
+          <!--
+          <systemPropertyVariables>
+            <selenium.remote.url>${selenium.remote.url}</selenium.remote.url>
+          </systemPropertyVariables>
+          -->
         </configuration>
       </plugin>
     </plugins>
