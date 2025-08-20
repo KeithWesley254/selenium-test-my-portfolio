@@ -8,18 +8,22 @@ pipeline {
   stages {
     stage('Run Selenium Tests') {
       steps {
-        powershell '''
-          Write-Host "🔎 Checking Selenium Grid at $env:SELENIUM_URL ..."
-          try {
-            $resp = Invoke-WebRequest -Uri "$env:SELENIUM_URL/status" -UseBasicParsing -TimeoutSec 10
-            Write-Host "✅ Selenium Grid is reachable."
-          } catch {
-            Write-Host "❌ Could not connect to Selenium Grid at $env:SELENIUM_URL"
-            exit 1
-          }
+        bat '''
+          echo 🔎 Checking Selenium Grid at %SELENIUM_URL% ...
 
-          # Run tests with Maven
-          mvn clean test -Dselenium.remote.url=$env:SELENIUM_URL
+          powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+            "try { ^
+                $resp = Invoke-WebRequest '%SELENIUM_URL%/status' -UseBasicParsing; ^
+                if ($resp.StatusCode -ne 200) { ^
+                  Write-Host '❌ Selenium Grid is not ready'; exit 1 ^
+                } else { ^
+                  Write-Host '✅ Selenium Grid is reachable' ^
+                } ^
+              } catch { ^
+                Write-Host '❌ Could not connect to Selenium Grid at %SELENIUM_URL%'; exit 1 ^
+              }"
+
+          mvn clean test -Dselenium.remote.url=%SELENIUM_URL%
         '''
       }
     }
