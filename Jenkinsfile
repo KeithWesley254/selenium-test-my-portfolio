@@ -4,8 +4,8 @@ pipeline {
   environment {
     SELENIUM_URL = 'http://host.docker.internal:4444/wd/hub'
     GRID_READY_TIMEOUT_SECS = '120'
-    JAVA_HOME = "${tool 'jdk-21'}"
-    MAVEN_HOME = "${tool 'maven-3.9.11'}"
+    JAVA_HOME = "${tool 'jdk21'}"
+    MAVEN_HOME = "${tool 'maven3'}"
     PATH = "${env.PATH};${JAVA_HOME}\\bin;${MAVEN_HOME}\\bin"
   }
 
