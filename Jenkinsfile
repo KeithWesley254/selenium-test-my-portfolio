@@ -63,7 +63,7 @@ pipeline {
           }
 
           Write-Host "🚀 Running tests with Maven..."
-          mvn -B -V clean test -Dselenium.remote.url=$env:SELENIUM_URL
+          mvn -B -V clean test "-Dselenium.remote.url=$env:SELENIUM_URL"
         '''
       }
     }
